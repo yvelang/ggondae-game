@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>꼰대 오피스</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!--
+    게임 전체가 이 #app 안에서 그려집니다.
+    각 씬(타이틀, 직급선택, 오피스, 엔딩)이 이 영역의 내용을 교체합니다.
+  -->
+  <div id="app" class="app"></div>
+
+  <!-- 데이터 모듈 (전역에 KKONDAE 네임스페이스로 등록) -->
+  <script src="js/data/characters.js"></script>
+  <script src="js/data/quests.js"></script>
+  <script src="js/data/items.js"></script>
+
+  <!-- 유틸 모듈 -->
+  <script src="js/utils/ui.js"></script>
+  <script src="js/utils/storage.js"></script>
+
+  <!-- 씬 모듈 -->
+  <script src="js/scenes/titleScene.js"></script>
+  <script src="js/scenes/characterSelect.js"></script>
+  <script src="js/scenes/officeScene.js"></script>
+  <script src="js/scenes/endingScene.js"></script>
+
+  <!-- 게임 핵심 로직 -->
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
