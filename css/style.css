@@ -461,16 +461,20 @@ button {
 
 /* 우측 캐릭터 초상화 (얼굴 클로즈업) */
 .dialog-portrait {
-  width: 140px;
+  width: 200px;
   flex-shrink: 0;
-  background: linear-gradient(180deg, #f4e3c8 0%, #d4b896 100%);
+  background: transparent;
   border-left: 3px solid #1a1a1a;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   overflow: hidden;
 }
 .dialog-portrait svg { width: 100%; height: 100%; }
+/* 초상화 이미지: 얼굴이 위쪽에 정렬되도록 (잘림/빈공간 최소화) */
+.dialog-portrait .sprite-img {
+  object-position: center top;
+}
 
 /* ===========================================================
    엔딩 화면용 미니 스탯
@@ -500,7 +504,7 @@ button {
 
   .office-scene { height: 100vh; max-height: 100vh; border-radius: 0; border: none; }
   .stats-card { min-width: 130px; }
-  .dialog-portrait { width: 90px; }
+  .dialog-portrait { width: 130px; }
   .dialog-content { padding: 14px; }
   .dialog-text { font-size: 14px; }
   .choice-btn { font-size: 13px; padding: 9px 12px; }
