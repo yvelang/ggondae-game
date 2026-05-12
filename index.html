@@ -3,10 +3,163 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
   <title>꼰대 오피스</title>
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ============================================================
+       비밀번호 잠금 화면 — 다른 사람 접근 차단용
+       ============================================================ */
+    #auth-lock {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 24px;
+      font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    }
+    #auth-lock.hidden { display: none; }
+    .auth-box {
+      background: #fffaf0;
+      border: 3px solid #2b2b2b;
+      border-radius: 12px;
+      padding: 36px 32px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 6px 0 #2b2b2b;
+      text-align: center;
+    }
+    .auth-box.shake { animation: auth-shake 0.4s; }
+    @keyframes auth-shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .auth-logo {
+      font-size: 32px;
+      font-weight: 900;
+      color: #c0392b;
+      letter-spacing: -1.5px;
+      text-shadow: 3px 3px 0 #2c3e50;
+      margin-bottom: 8px;
+    }
+    .auth-hint {
+      font-size: 13px;
+      color: #8a8a8a;
+      margin-bottom: 20px;
+    }
+    .auth-input {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 16px;
+      font-family: inherit;
+      border: 2px solid #2b2b2b;
+      border-radius: 8px;
+      outline: none;
+      background: #fff;
+      box-shadow: 0 2px 0 #2b2b2b;
+      margin-bottom: 12px;
+    }
+    .auth-input:focus { border-color: #c0392b; }
+    .auth-btn {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      color: #fff;
+      background: #c0392b;
+      border: 2px solid #2b2b2b;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #2b2b2b;
+      transition: transform 0.08s ease, background 0.15s ease;
+    }
+    .auth-btn:hover { background: #a93226; }
+    .auth-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #2b2b2b; }
+    .auth-error {
+      color: #c0392b;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 12px;
+      min-height: 18px;
+    }
+  </style>
 </head>
 <body>
+  <!-- ============================================================
+       비밀번호 잠금 화면 (인증되면 자동으로 숨김)
+
+       👇👇👇 비밀번호 변경은 아래 <script> 안의 SITE_PASSWORD 값만 수정 👇👇👇
+       ============================================================ -->
+  <div id="auth-lock">
+    <div class="auth-box" id="auth-box">
+      <div class="auth-logo">꼰대 오피스</div>
+      <div class="auth-hint">초대된 분만 입장 가능합니다.</div>
+      <input
+        type="password"
+        id="auth-input"
+        class="auth-input"
+        placeholder="비밀번호"
+        autocomplete="off"
+        autofocus
+      />
+      <button id="auth-btn" class="auth-btn">입장</button>
+      <div id="auth-error" class="auth-error"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ⚠️ 비밀번호 — 원하는 값으로 바꿔서 commit & push 하세요.
+      //    예: 'mykkondae!23'
+      const SITE_PASSWORD = 'kkondae2026';
+
+      const STORAGE_KEY = 'kkondae-office:auth:v1';
+      const lock = document.getElementById('auth-lock');
+      const input = document.getElementById('auth-input');
+      const btn = document.getElementById('auth-btn');
+      const errEl = document.getElementById('auth-error');
+      const box = document.getElementById('auth-box');
+
+      // 이미 인증된 적 있으면 자물쇠 화면 바로 숨김
+      try {
+        if (localStorage.getItem(STORAGE_KEY) === '1') {
+          lock.classList.add('hidden');
+          return;
+        }
+      } catch (e) { /* localStorage 비활성화 환경 */ }
+
+      function tryUnlock() {
+        const v = (input.value || '').trim();
+        if (v === SITE_PASSWORD) {
+          try { localStorage.setItem(STORAGE_KEY, '1'); } catch (e) {}
+          lock.classList.add('hidden');
+        } else {
+          errEl.textContent = '비밀번호가 틀렸습니다.';
+          box.classList.remove('shake');
+          // reflow 트릭으로 애니메이션 재시작
+          void box.offsetWidth;
+          box.classList.add('shake');
+          input.select();
+        }
+      }
+
+      btn.addEventListener('click', tryUnlock);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') tryUnlock();
+      });
+      // 초점
+      setTimeout(() => input.focus(), 50);
+    })();
+  </script>
+
   <!--
     게임 전체가 이 #app 안에서 그려집니다.
     각 씬(타이틀, 직급선택, 오피스, 엔딩)이 이 영역의 내용을 교체합니다.
