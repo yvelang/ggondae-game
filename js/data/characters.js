@@ -20,6 +20,16 @@
         실력: 30,
         인맥: 10,
         꼰대지수: 0
+      },
+      // SVG 캐릭터 색상 (스프라이트 렌더러에서 사용)
+      visual: {
+        hairColor: '#2b1f1a',
+        skinColor: '#fad6b3',
+        suitColor: '#2c3e50',
+        shirtColor: '#ffffff',
+        accentColor: '#c0392b',
+        hairStyle: 'short',          // 남자용
+        hairStyleFemale: 'bob'        // 여자용
       }
     },
     {
@@ -33,6 +43,15 @@
         실력: 55,
         인맥: 40,
         꼰대지수: 15
+      },
+      visual: {
+        hairColor: '#3a2a1a',
+        skinColor: '#f5cba0',
+        suitColor: '#5d4e75',
+        shirtColor: '#f0f0f0',
+        accentColor: '#27ae60',
+        hairStyle: 'medium',
+        hairStyleFemale: 'longStraight'
       }
     },
     {
@@ -46,6 +65,15 @@
         실력: 80,
         인맥: 70,
         꼰대지수: 60
+      },
+      visual: {
+        hairColor: '#555555',
+        skinColor: '#ecbfa0',
+        suitColor: '#1a2530',
+        shirtColor: '#f8f8f8',
+        accentColor: '#8b0000',
+        hairStyle: 'sleek',
+        hairStyleFemale: 'shortPro'
       }
     }
   ];

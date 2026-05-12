@@ -24,12 +24,13 @@
   }
 
   /** 직급 카드를 클릭했을 때 */
-  function selectCharacter(characterId) {
+  function selectCharacter(characterId, gender) {
     const character = window.KKONDAE.CHARACTERS.find(c => c.id === characterId);
     if (!character) return;
 
     state = {
       characterId,
+      gender: gender === 'female' ? 'female' : 'male',
       day: 1,
       // 스탯은 복사해서 시작 (원본 데이터 오염 방지)
       stats: Object.assign({}, character.startStats),
@@ -54,17 +55,25 @@
     }
   }
 
-  /** 선택지를 클릭했을 때 */
+  /** 선택지를 클릭했을 때 — 효과 반영 후 결과 화면을 보여준다 */
   function applyChoice(choiceIndex) {
     if (!currentQuest) return;
     const choice = currentQuest.choices[choiceIndex];
     if (!choice) return;
 
-    // 효과 반영 + 0~100 범위로 클램핑
+    // 효과 반영 + 0~100 범위로 클램핑 (스탯 카드에 즉시 반영됨)
     for (const [key, delta] of Object.entries(choice.effects || {})) {
       const cur = state.stats[key] ?? 0;
       state.stats[key] = clamp(cur + delta, 0, 100);
     }
+
+    // 결과 화면 표시 — 아직 다음 턴으로 넘어가지 않음
+    window.OfficeScene.renderResult(state, currentQuest, choice);
+  }
+
+  /** 결과 화면의 "다음" 버튼 클릭시 — 다음 턴으로 진행 */
+  function advanceFromResult() {
+    if (!currentQuest) return;
 
     state.usedQuestIds.push(currentQuest.id);
     state.day += 1;
@@ -117,6 +126,7 @@
     selectCharacter,
     continueFromSave,
     applyChoice,
+    advanceFromResult,
     // 디버그용
     _getState: () => state
   };

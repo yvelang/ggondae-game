@@ -1,71 +1,192 @@
 /* ===========================================================
    오피스 화면 (메인 게임 화면)
-   - 상단: 캐릭터 정보 + 스탯 + 며칠차
-   - 본문: 현재 퀘스트 설명
-   - 하단: 선택지 버튼들
+   - render(state, quest)       : 퀘스트(질문) 화면
+   - renderResult(state, quest, choice) : 선택 후 결과 화면
+       · 결과 텍스트 + 스탯 변화 + "다음" 버튼
+       · 우측 초상화 표정은 choice.resultMood 로 변경
+
+   상단 무대(배경+캐릭터+스탯카드)는 두 화면 공통 구조이며,
+   하단 대화창만 내용이 바뀝니다.
    =========================================================== */
 
 (function () {
   'use strict';
 
-  function render(state, quest) {
-    const { el, mount } = window.UI;
-    const { STAT_KEYS, MAX_DAYS, CHARACTERS } = window.KKONDAE;
+  /* ============================================================
+     공통 — 상단 무대(stage) 생성
+     ============================================================ */
+  function buildStage(state, character) {
+    const { el } = window.UI;
+    const { STAT_KEYS, MAX_DAYS } = window.KKONDAE;
 
-    const character = CHARACTERS.find(c => c.id === state.characterId);
+    const stage = el('div', { className: 'stage' });
 
-    const scene = el('div', { className: 'scene' });
-
-    // 상단: 일자 표시
-    scene.appendChild(el('div', {
-      className: 'day-indicator',
-      text: `Day ${state.day} / ${MAX_DAYS}  ·  ${character.name}`
+    // 배경
+    stage.appendChild(window.Sprite.officeBackground({
+      className: 'stage__bg'
     }));
 
-    // 스탯 패널
-    const statsBox = el('div', { className: 'stats' });
+    // 캐릭터 풀바디
+    stage.appendChild(window.Sprite.characterFullBody({
+      characterId: character.id,
+      gender: state.gender,
+      visual: character.visual,
+      className: 'stage__character'
+    }));
+
+    // 상단바 (Day + 스탯)
+    const topBar = el('div', { className: 'top-bar' });
+
+    const dayCard = el('div', { className: 'day-card' });
+    dayCard.innerHTML = `Day <span class="day-card__num">${state.day}</span> / ${MAX_DAYS}`;
+    topBar.appendChild(dayCard);
+
+    const statsCard = el('div', { className: 'stats-card' });
+    statsCard.appendChild(el('div', {
+      className: 'stats-card__name',
+      text: character.name
+    }));
     STAT_KEYS.forEach(key => {
-      const stat = el('div', { className: 'stat' });
-      stat.appendChild(el('div', { className: 'stat__label', text: key }));
-      stat.appendChild(el('div', {
-        className: 'stat__value',
+      const row = el('div', { className: 'stats-card__row' });
+      row.appendChild(el('span', { className: 'stats-card__label', text: key }));
+      row.appendChild(el('span', {
+        className: 'stats-card__value',
         text: String(state.stats[key] ?? 0)
       }));
-      statsBox.appendChild(stat);
+      statsCard.appendChild(row);
     });
-    scene.appendChild(statsBox);
+    topBar.appendChild(statsCard);
 
-    // 퀘스트 본문
-    scene.appendChild(el('div', { className: 'scene__title', text: quest.title }));
-    scene.appendChild(el('div', { className: 'scene__body', text: quest.description }));
+    stage.appendChild(topBar);
+    return stage;
+  }
 
-    // 선택지
+  /* ============================================================
+     퀘스트(질문) 화면
+     ============================================================ */
+  function render(state, quest) {
+    const { el, mount } = window.UI;
+    const { CHARACTERS } = window.KKONDAE;
+    const character = CHARACTERS.find(c => c.id === state.characterId);
+
+    const root = el('div', { className: 'office-scene' });
+
+    // 상단: 무대
+    root.appendChild(buildStage(state, character));
+
+    // 하단: 대화창 (질문 + 선택지)
+    const dialog = el('div', { className: 'dialog-box' });
+
+    const content = el('div', { className: 'dialog-content' });
+    content.appendChild(el('div', {
+      className: 'dialog-title',
+      text: '— ' + quest.title + ' —'
+    }));
+    content.appendChild(el('div', {
+      className: 'dialog-text',
+      text: quest.description
+    }));
+
+    const choices = el('div', { className: 'dialog-choices' });
     quest.choices.forEach((choice, idx) => {
       const btn = el('button', {
-        className: 'btn',
+        className: 'choice-btn',
+        text: choice.label,
         onClick: () => window.Game.applyChoice(idx)
       });
-      btn.appendChild(el('div', { text: choice.label }));
-      // 효과는 일단 숨겨도 되지만, 초보 친화를 위해 작게 미리 보여줍니다.
-      const effects = formatEffects(choice.effects);
-      if (effects) {
-        const small = el('div', { html: effects });
-        btn.appendChild(small);
-      }
-      scene.appendChild(btn);
+      choices.appendChild(btn);
     });
+    content.appendChild(choices);
+    dialog.appendChild(content);
 
-    mount(scene);
+    // 우측 초상화 — 퀘스트의 mood 사용
+    dialog.appendChild(window.Sprite.characterPortrait({
+      characterId: character.id,
+      gender: state.gender,
+      mood: quest.mood,
+      visual: character.visual,
+      className: 'dialog-portrait'
+    }));
+
+    root.appendChild(dialog);
+
+    mount(root);
   }
 
-  function formatEffects(effects) {
-    if (!effects) return '';
-    return Object.entries(effects).map(([k, v]) => {
-      const cls = v >= 0 ? 'effect-toast--up' : 'effect-toast--down';
-      const sign = v >= 0 ? '+' : '';
-      return `<span class="effect-toast ${cls}">${k} ${sign}${v}</span>`;
-    }).join('');
+  /* ============================================================
+     결과 화면 — 선택 후
+     ============================================================ */
+  function renderResult(state, quest, choice) {
+    const { el, mount } = window.UI;
+    const { CHARACTERS } = window.KKONDAE;
+    const character = CHARACTERS.find(c => c.id === state.characterId);
+
+    const root = el('div', { className: 'office-scene' });
+
+    // 상단: 무대
+    root.appendChild(buildStage(state, character));
+
+    // 하단: 결과 대화창
+    const dialog = el('div', { className: 'dialog-box' });
+    const content = el('div', { className: 'dialog-content' });
+
+    content.appendChild(el('div', {
+      className: 'dialog-title',
+      text: '— 결과 —'
+    }));
+
+    // 선택했던 문구를 살짝 회색으로
+    content.appendChild(el('div', {
+      className: 'dialog-result-choice',
+      text: '내 선택: "' + choice.label + '"'
+    }));
+
+    // 결과 본문
+    content.appendChild(el('div', {
+      className: 'dialog-text',
+      text: choice.result || '...'
+    }));
+
+    // 스탯 변화 배지
+    const effects = choice.effects || {};
+    const changedKeys = Object.keys(effects).filter(k => effects[k] !== 0);
+    if (changedKeys.length > 0) {
+      const deltas = el('div', { className: 'stat-deltas' });
+      changedKeys.forEach(key => {
+        const v = effects[key];
+        const cls = 'stat-delta ' + (v > 0 ? 'stat-delta--up' : 'stat-delta--down');
+        deltas.appendChild(el('span', {
+          className: cls,
+          text: key + ' ' + (v > 0 ? '+' + v : v)
+        }));
+      });
+      content.appendChild(deltas);
+    }
+
+    // "다음" 버튼
+    const nextWrap = el('div', { className: 'dialog-choices' });
+    nextWrap.appendChild(el('button', {
+      className: 'choice-btn choice-btn--next',
+      text: '다음 ▶',
+      onClick: () => window.Game.advanceFromResult()
+    }));
+    content.appendChild(nextWrap);
+
+    dialog.appendChild(content);
+
+    // 우측 초상화 — 결과 mood 적용
+    dialog.appendChild(window.Sprite.characterPortrait({
+      characterId: character.id,
+      gender: state.gender,
+      mood: choice.resultMood,
+      visual: character.visual,
+      className: 'dialog-portrait'
+    }));
+
+    root.appendChild(dialog);
+
+    mount(root);
   }
 
-  window.OfficeScene = { render };
+  window.OfficeScene = { render, renderResult };
 })();
